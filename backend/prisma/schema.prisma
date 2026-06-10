@@ -1,0 +1,104 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  username       String    @unique
+  displayName    String?
+  cityId         Int
+  lastPlacedTime DateTime?
+  totalPixelsPlaced Int     @default(0)
+  createdAt      DateTime  @default(now())
+  
+  isSupporter       Boolean @default(false)
+  equippedFrame     String?
+  equippedBadge     String?
+  equippedNameColor String?
+
+  city City @relation(fields: [cityId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contributions CityContribution[]
+  purchases     Purchase[]
+  cosmetics     UserCosmetic[]
+  leaderships   CityLeader[]
+}
+
+model City {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  color  String
+  users  User[]
+  pixels Pixel[]
+  contributions CityContribution[]
+  leaders       CityLeader[]
+}
+
+model Pixel {
+  id        Int      @id @default(autoincrement())
+  x         Int
+  y         Int
+  cityId    Int
+  updatedAt DateTime @updatedAt
+
+  city City @relation(fields: [cityId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([x, y])
+}
+
+model CityContribution {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  cityId        Int
+  pixelsPlaced  Int      @default(0)
+  cycleStart    DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  city City @relation(fields: [cityId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([userId, cityId, cycleStart])
+}
+
+model CityLeader {
+  id            Int      @id @default(autoincrement())
+  cityId        Int
+  userId        Int
+  cycleStart    DateTime
+  cycleEnd      DateTime
+
+  city City @relation(fields: [cityId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([cityId, cycleStart])
+}
+
+model Product {
+  id             String  @id
+  name           String
+  type           String  // "frame", "badge", "nameColor", "supporter"
+  price          Float
+  stripePriceId  String
+}
+
+model UserCosmetic {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Purchase {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  stripeSessionId  String   @unique
+  status           String
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

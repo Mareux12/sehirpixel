@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: sehirpixel-backend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sehirpixel-db
+          property: connectionString
+      - key: STRIPE_SECRET_KEY
+        sync: false
+
+databases:
+  - name: sehirpixel-db
+    databaseName: turkey_pixel_war
+    user: pixel_user
+    plan: free
