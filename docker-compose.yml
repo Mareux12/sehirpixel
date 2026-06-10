@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: turkey_pixel_db
+    environment:
+      POSTGRES_USER: pixel_user
+      POSTGRES_PASSWORD: pixel_password
+      POSTGRES_DB: turkey_pixel_war
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Uncomment these when building production images
+  # backend:
+  #   build: ./backend
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     DATABASE_URL: postgresql://pixel_user:pixel_password@db:5432/turkey_pixel_war
+  # 
+  # frontend:
+  #   build: ./frontend
+  #   ports:
+  #     - "80:80"
+
+volumes:
+  pgdata:
