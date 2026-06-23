@@ -16,6 +16,7 @@ export const Map: React.FC = () => {
   const mousedownPos = useRef({ x: 0, y: 0 });
   const animationRef = useRef<number>(0);
   const hoveredPixel = useRef<{ x: number; y: number } | null>(null);
+  const needsRender = useRef(true);
 
   // Center map initially
   useEffect(() => {
@@ -58,6 +59,7 @@ export const Map: React.FC = () => {
 
     cachedCanvasRef.current = canvas;
     isCanvasGenerated.current = true;
+    needsRender.current = true;
   }, [pixels, cities]);
 
   // Incremental update for single pixels
@@ -71,6 +73,7 @@ export const Map: React.FC = () => {
       if (city) {
          ctx.fillStyle = city.color;
          ctx.fillRect(lastUpdatedPixel.x * PIXEL_SIZE, lastUpdatedPixel.y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+         needsRender.current = true;
       }
     }
   }, [lastUpdatedPixel, cities]);
@@ -83,6 +86,12 @@ export const Map: React.FC = () => {
     if (!ctx) return;
 
     const render = () => {
+      if (!needsRender.current) {
+        animationRef.current = requestAnimationFrame(render);
+        return;
+      }
+      needsRender.current = false;
+      
       const dpr = window.devicePixelRatio || 1;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
@@ -133,6 +142,7 @@ export const Map: React.FC = () => {
         canvas.height = h * dpr;
         canvas.style.width = w + 'px';
         canvas.style.height = h + 'px';
+        needsRender.current = true;
       }
     };
 
@@ -182,6 +192,7 @@ export const Map: React.FC = () => {
 
       scale.current = newScale;
       offset.current = { x: newOffsetX, y: newOffsetY };
+      needsRender.current = true;
     }
   };
 
@@ -207,6 +218,7 @@ export const Map: React.FC = () => {
       } else {
         hoveredPixel.current = null;
       }
+      needsRender.current = true;
     }
   };
 
@@ -217,6 +229,7 @@ export const Map: React.FC = () => {
   const handleMouseLeave = () => {
     isDragging.current = false;
     hoveredPixel.current = null;
+    needsRender.current = true;
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -261,6 +274,7 @@ export const Map: React.FC = () => {
       <canvas
         ref={canvasRef}
         className="block w-full h-full"
+        style={{ imageRendering: 'pixelated' }}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}

@@ -25,7 +25,7 @@ export default function Game() {
 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] =
-    useState<'leaderboard' | 'cityLeaders' | 'profile'>('leaderboard');
+    useState<'leaderboard' | 'cityLeaders' | 'profile' | null>(window.innerWidth > 768 ? 'leaderboard' : null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,23 +88,34 @@ export default function Game() {
       <Map />
       {user && <Chat />}
 
-      <div className="absolute right-4 top-4 w-80 flex flex-col">
-        <div className="flex gap-2">
-          <button onClick={() => setActiveTab('leaderboard')}>
-            <Trophy />
+      <div className="absolute right-4 top-4 z-40 flex flex-col items-end pointer-events-none">
+        <div className="flex gap-2 mb-2 pointer-events-auto">
+          <button 
+            onClick={() => setActiveTab(activeTab === 'leaderboard' ? null : 'leaderboard')}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${activeTab === 'leaderboard' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'glass text-slate-400 hover:text-indigo-400'}`}
+          >
+            <Trophy size={18} />
           </button>
-          <button onClick={() => setActiveTab('cityLeaders')}>
-            <Crown />
+          <button 
+            onClick={() => setActiveTab(activeTab === 'cityLeaders' ? null : 'cityLeaders')}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${activeTab === 'cityLeaders' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' : 'glass text-slate-400 hover:text-amber-400'}`}
+          >
+            <Crown size={18} />
           </button>
-          <button onClick={() => setActiveTab('profile')}>
-            <UserIcon />
+          <button 
+            onClick={() => setActiveTab(activeTab === 'profile' ? null : 'profile')}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${activeTab === 'profile' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'glass text-slate-400 hover:text-emerald-400'}`}
+          >
+            <UserIcon size={18} />
           </button>
         </div>
 
-        <div>
-          {activeTab === 'leaderboard' && <Leaderboard />}
-          {activeTab === 'cityLeaders' && <CityLeadersTab />}
-          {activeTab === 'profile' && <ProfileTab />}
+        <div className={`pointer-events-auto w-[calc(100vw-2rem)] md:w-80 transition-all duration-300 origin-top-right ${activeTab ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'}`}>
+          <div className="h-[60vh] md:h-auto max-h-[80vh] overflow-hidden rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.6)]">
+            {activeTab === 'leaderboard' && <Leaderboard />}
+            {activeTab === 'cityLeaders' && <CityLeadersTab />}
+            {activeTab === 'profile' && <ProfileTab />}
+          </div>
         </div>
       </div>
 

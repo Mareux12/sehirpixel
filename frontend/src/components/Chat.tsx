@@ -49,18 +49,18 @@ export const Chat: React.FC = () => {
   };
 
   return (
-    <div className="absolute bottom-6 left-4 z-30 flex flex-col items-start">
+    <div className="absolute bottom-20 left-4 right-4 md:bottom-6 md:right-auto md:w-80 z-50 flex flex-col items-start pointer-events-none">
       {/* Chat panel */}
       <div
-        className="overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-bottom-left"
+        className="overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-bottom-left w-full pointer-events-auto"
         style={{
-          maxHeight: isOpen ? '420px' : '0px',
+          maxHeight: isOpen ? '60vh' : '0px',
           opacity: isOpen ? 1 : 0,
           transform: isOpen ? 'scale(1)' : 'scale(0.95)',
           marginBottom: isOpen ? '8px' : '0px',
         }}
       >
-        <div className="glass-strong rounded-2xl w-80 h-[400px] flex flex-col shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden">
+        <div className="glass-strong rounded-2xl w-full h-[60vh] md:h-[400px] flex flex-col shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
             <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export const Chat: React.FC = () => {
           {/* Input */}
           <div className="p-3 border-t border-white/5 relative">
             {/* Emoji Picker Popup */}
-            {showEmojiPicker && (
+            {isOpen && showEmojiPicker && (
               <div className="absolute bottom-full left-0 mb-2 z-50">
                 <div className="glass-strong rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden">
                   <EmojiPicker
@@ -178,7 +178,7 @@ export const Chat: React.FC = () => {
       {/* Toggle button */}
       <button
         onClick={() => setIsOpen(prev => !prev)}
-        className="group glass rounded-full w-11 h-11 flex items-center justify-center hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.3)] relative"
+        className="pointer-events-auto group glass rounded-full w-11 h-11 flex items-center justify-center hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.3)] relative"
       >
         {isOpen ? (
           <ChevronDown size={18} className="text-slate-400 group-hover:text-indigo-400 transition-colors" />

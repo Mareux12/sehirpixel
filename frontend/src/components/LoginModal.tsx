@@ -9,12 +9,16 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 export const LoginModal: React.FC = () => {
   const { cities, setUser, connectSocket } = useGameStore();
   const [displayName, setDisplayName] = useState('');
+  const [selectedCityId, setSelectedCityId] = useState<number>(0);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetch(`${API_URL}/api/cities`)
       .then(res => res.json())
-      .then(data => useGameStore.getState().setCities(data));
+      .then(data => {
+        useGameStore.getState().setCities(data);
+        if (data.length > 0) setSelectedCityId(data[0].id);
+      });
   }, []);
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
@@ -36,7 +40,7 @@ export const LoginModal: React.FC = () => {
       const res = await fetch(`${API_URL}/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: email, cityId: cities[0]?.id || 1 })
+        body: JSON.stringify({ username: email, cityId: selectedCityId || 1 })
       });
 
       const data = await res.json();
@@ -105,6 +109,24 @@ export const LoginModal: React.FC = () => {
                 className="w-full bg-slate-900/60 border border-slate-700/50 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all text-sm placeholder:text-slate-500"
               />
               <div className="text-[11px] text-slate-500 mt-1.5 text-right">{displayName.length}/20</div>
+            </div>
+
+            {/* City Selection */}
+            <div>
+              <label className="block text-slate-300 mb-2 font-semibold text-sm flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-indigo-500"></span> Şehrini (Rengini) Seç
+              </label>
+              <select
+                value={selectedCityId}
+                onChange={(e) => setSelectedCityId(Number(e.target.value))}
+                className="w-full bg-slate-900/60 border border-slate-700/50 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all text-sm appearance-none"
+              >
+                {cities.map((city) => (
+                  <option key={city.id} value={city.id} style={{ color: city.color }}>
+                    {city.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Google Login */}
