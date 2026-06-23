@@ -39,6 +39,11 @@ export const LoginModal: React.FC = () => {
       return;
     }
 
+    if (!isLoginTab && !selectedCityId) {
+      setError('Şehirler henüz yüklenmedi, lütfen bekleyin.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -46,7 +51,7 @@ export const LoginModal: React.FC = () => {
       const endpoint = isLoginTab ? '/api/login' : '/api/register';
       const body = isLoginTab 
         ? { username: username.trim(), password }
-        : { username: username.trim(), password, cityId: selectedCityId || 1 };
+        : { username: username.trim(), password, cityId: selectedCityId };
 
       const res = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',

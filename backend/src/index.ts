@@ -67,7 +67,8 @@ app.post('/api/register', async (req, res) => {
       include: { cosmetics: true }
     });
     
-    res.json(user);
+    const { password: _, ...safeUser } = user;
+    res.json(safeUser);
   } catch (error: any) {
     console.error("Register Error:", error);
     res.status(500).json({ error: "Sunucu hatası: " + (error.message || String(error)) });
@@ -99,7 +100,8 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ error: "Hatalı şifre." });
     }
 
-    res.json(user);
+    const { password: _, ...safeUser } = user;
+    res.json(safeUser);
   } catch (error: any) {
     console.error("Login Error:", error);
     res.status(500).json({ error: "Sunucu hatası: " + (error.message || String(error)) });
