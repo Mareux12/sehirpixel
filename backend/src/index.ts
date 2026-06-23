@@ -35,6 +35,34 @@ try {
 // Start Cron Jobs
 startCronJobs(io);
 
+// In-memory Leaderboard
+let inMemoryLeaderboard: any[] = [];
+let inMemoryTotalPixels = 0;
+
+const initializeLeaderboard = async () => {
+  try {
+    const cityStats = await prisma.city.findMany({
+      include: {
+        _count: { select: { pixels: true } }
+      }
+    });
+    inMemoryLeaderboard = cityStats
+      .map(c => ({
+        id: c.id,
+        name: c.name,
+        color: c.color,
+        pixelCount: c._count.pixels
+      }))
+      .sort((a, b) => b.pixelCount - a.pixelCount);
+    
+    inMemoryTotalPixels = inMemoryLeaderboard.reduce((acc, curr) => acc + curr.pixelCount, 0);
+    console.log('Leaderboard initialized in memory.');
+  } catch (err) {
+    console.error('Failed to initialize leaderboard', err);
+  }
+};
+initializeLeaderboard();
+
 // Stripe webhook requires raw body
 app.use('/api/webhook', express.raw({ type: 'application/json' }));
 app.use(cors());
@@ -133,31 +161,11 @@ app.get('/api/stats', async (req, res) => {
   const totalUsers = await prisma.user.count();
   const onlineUsers = io.engine.clientsCount;
   
-  // Get city stats for leaderboard
-  const cityStats = await prisma.city.findMany({
-    include: {
-      _count: {
-        select: { pixels: true }
-      }
-    }
-  });
-
-  const leaderboard = cityStats
-    .map(c => ({
-      id: c.id,
-      name: c.name,
-      color: c.color,
-      pixelCount: c._count.pixels
-    }))
-    .sort((a, b) => b.pixelCount - a.pixelCount);
-
-  const totalPixels = leaderboard.reduce((acc, curr) => acc + curr.pixelCount, 0);
-
   res.json({
     totalUsers,
     onlineUsers,
-    totalPixels,
-    leaderboard
+    totalPixels: inMemoryTotalPixels,
+    leaderboard: inMemoryLeaderboard
   });
 });
 
@@ -273,6 +281,8 @@ io.on('connection', (socket) => {
         return socket.emit('error', 'Invalid pixel location (Sea/Out of bounds)');
       }
 
+      const oldCityId = pixel.cityId;
+
       // Update pixel
       await prisma.pixel.update({
         where: { id: pixel.id },
@@ -312,21 +322,21 @@ io.on('connection', (socket) => {
       // Broadcast pixel update
       io.emit('pixel_update', { x, y, cityId });
 
-      const cityStats = await prisma.city.findMany({
-        include: {
-          _count: { select: { pixels: true } }
-        }
-      });
-      const leaderboard = cityStats
-        .map(c => ({
-          id: c.id,
-          name: c.name,
-          color: c.color,
-          pixelCount: c._count.pixels
-        }))
-        .sort((a, b) => b.pixelCount - a.pixelCount);
+      // Update in-memory leaderboard
+      if (oldCityId !== cityId) {
+        let oldCity = inMemoryLeaderboard.find(c => c.id === oldCityId);
+        let newCity = inMemoryLeaderboard.find(c => c.id === cityId);
         
-      io.emit('stats_update', { leaderboard });
+        if (oldCity) oldCity.pixelCount = Math.max(0, oldCity.pixelCount - 1);
+        if (newCity) newCity.pixelCount += 1;
+        
+        inMemoryLeaderboard.sort((a, b) => b.pixelCount - a.pixelCount);
+        
+        io.emit('stats_update', { 
+          leaderboard: inMemoryLeaderboard,
+          totalPixels: inMemoryTotalPixels
+        });
+      }
 
     } catch (err) {
       console.error(err);

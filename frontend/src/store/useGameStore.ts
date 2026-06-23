@@ -234,9 +234,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
 
     socket.on('stats_update', (data: any) => {
-      if (data.leaderboard) {
-        set({ leaderboard: data.leaderboard });
-      }
+      const updates: Partial<GameState> = {};
+      if (data.leaderboard) updates.leaderboard = data.leaderboard;
+      if (data.totalPixels !== undefined) updates.totalPixels = data.totalPixels;
+      if (Object.keys(updates).length > 0) set(updates);
     });
 
     socket.on('online_users', (count: number) => {
