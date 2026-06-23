@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
 import bcrypt from 'bcryptjs';
+import { execSync } from 'child_process';
 import { startCronJobs, getCurrentCycleStart, getNextCycleStart } from './cron';
 
 dotenv.config();
@@ -21,6 +22,15 @@ const io = new Server(server, {
 
 const prisma = new PrismaClient();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock');
+
+// Auto-push DB schema on startup
+try {
+  console.log('Pushing database schema...');
+  execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+  console.log('Database schema pushed successfully.');
+} catch (e) {
+  console.error('Failed to push database schema:', e);
+}
 
 // Start Cron Jobs
 startCronJobs(io);
