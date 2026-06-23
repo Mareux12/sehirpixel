@@ -5,6 +5,7 @@ import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
+import bcrypt from 'bcryptjs';
 import { startCronJobs, getCurrentCycleStart, getNextCycleStart } from './cron';
 
 dotenv.config();
@@ -30,35 +31,66 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
-app.post('/api/auth', async (req, res) => {
-  const { username, cityId } = req.body;
-  if (!username || !cityId) {
-    return res.status(400).json({ error: "Username and cityId required" });
+app.post('/api/register', async (req, res) => {
+  const { username, password, cityId } = req.body;
+  if (!username || !password || !cityId) {
+    return res.status(400).json({ error: "Kullanıcı adı, şifre ve şehir zorunludur." });
+  }
+  
+  if (username.length < 2 || username.length > 20) {
+    return res.status(400).json({ error: "Kullanıcı adı 2-20 karakter olmalıdır." });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: "Şifre en az 6 karakter olmalıdır." });
   }
 
   try {
-    let user = await prisma.user.findUnique({ 
-      where: { username },
+    const existing = await prisma.user.findUnique({ where: { username } });
+    if (existing) {
+      return res.status(400).json({ error: "Bu kullanıcı adı zaten alınmış!" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { username, displayName: username, password: hashedPassword, cityId },
       include: { cosmetics: true }
     });
     
-    if (!user) {
-      user = await prisma.user.create({
-        data: { username, cityId },
-        include: { cosmetics: true }
-      });
-    } else if (user.cityId !== cityId) {
-      user = await prisma.user.update({
-        where: { username },
-        data: { cityId },
-        include: { cosmetics: true }
-      });
-    }
-    
-    // Send user data
     res.json(user);
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Sunucu hatası." });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: "Kullanıcı adı ve şifre zorunludur." });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { username },
+      include: { cosmetics: true }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Kullanıcı bulunamadı." });
+    }
+
+    if (!user.password) {
+       return res.status(400).json({ error: "Bu hesap eski sürümde (Google ile) oluşturulmuş." });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: "Hatalı şifre." });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Sunucu hatası." });
   }
 });
 

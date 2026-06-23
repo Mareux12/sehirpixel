@@ -6,7 +6,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "npx prisma generate && tsc",
+    "build": "npx prisma generate && npx prisma db push --accept-data-loss && tsc",
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts"
   },
@@ -17,6 +17,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "@types/d3-geo": "^3.1.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "d3-geo": "^3.1.1",
     "dotenv": "^17.4.2",
@@ -26,6 +27,7 @@
     "stripe": "^22.2.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.9.2",
